@@ -1,0 +1,16 @@
+{
+  "_toelichting": "Kopieer dit bestand naar scripts/structuur.json en vul je eigen structuur in. structuur.json staat in .gitignore, zodat de namen van je bedrijven en aandeelhouders niet in een openbare repository terechtkomen. Soort is persoon, holding of werkmaatschappij. Relaties gaan van eigenaar naar onderdeel.",
+  "onderdelen": [
+    { "naam": "Anna", "soort": "persoon", "korte_omschrijving": "Aandeelhouder, via Anna Holding.", "positie_x": -220, "positie_y": 0 },
+    { "naam": "Bram", "soort": "persoon", "korte_omschrijving": "Aandeelhouder, via Bram Holding.", "positie_x": 220, "positie_y": 0 },
+    { "naam": "Anna Holding", "soort": "holding", "korte_omschrijving": "Persoonlijke holding van Anna.", "positie_x": -220, "positie_y": 200 },
+    { "naam": "Bram Holding", "soort": "holding", "korte_omschrijving": "Persoonlijke holding van Bram.", "positie_x": 220, "positie_y": 200 },
+    { "naam": "Voorbeeld Werkmaatschappij", "soort": "werkmaatschappij", "korte_omschrijving": "Werkmaatschappij, gehouden door beide holdings.", "positie_x": 0, "positie_y": 400 }
+  ],
+  "relaties": [
+    ["Anna", "Anna Holding"],
+    ["Bram", "Bram Holding"],
+    ["Anna Holding", "Voorbeeld Werkmaatschappij"],
+    ["Bram Holding", "Voorbeeld Werkmaatschappij"]
+  ]
+}

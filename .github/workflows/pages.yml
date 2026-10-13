@@ -1,0 +1,61 @@
+name: Publiceren naar GitHub Pages
+
+# Bouwt de statische site en zet hem op GitHub Pages, bij elke push naar main.
+# Je kunt hem ook met de hand starten onder het tabblad Actions.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Een publicatie tegelijk; een nieuwe push laat een lopende afmaken.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  bouwen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Site bouwen
+        env:
+          # Deze twee horen in de browser thuis en staan ook gewoon in de
+          # gebouwde JavaScript. De publishable key geeft op zichzelf nergens
+          # toegang toe: Row Level Security in de database bepaalt wat iemand
+          # mag zien, en zonder inloggen is dat niets.
+          NEXT_PUBLIC_SUPABASE_URL: https://ooqkpazyvohsrdvxfnug.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_fkVuhCNu_Q0Ze9x5VPee1g_jtzClD0O
+          # Leeg laten bij een eigen domein (kaart.recraparcs.nl). Zet hem op
+          # /bedrijfskaart als de site op rubenkraan-droid.github.io/bedrijfskaart
+          # komt te staan. In te stellen onder Settings > Secrets and variables >
+          # Actions > Variables.
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.BASE_PATH }}
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./out
+
+  publiceren:
+    needs: bouwen
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicatie.outputs.page_url }}
+    steps:
+      - id: publicatie
+        uses: actions/deploy-pages@v4

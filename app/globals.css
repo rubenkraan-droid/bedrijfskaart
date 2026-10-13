@@ -1,0 +1,107 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+/* ---------------------------------------------------------------------------
+   Huisstijl: rustig en zakelijk. Donkergroene blokken met witte tekst op een
+   lichte achtergrond, grijze verbindingslijnen. Bewust alleen een lichte
+   weergave, zodat de kaart er voor iedereen hetzelfde uitziet.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  --color-groen-900: #16261f;
+  --color-groen-800: #223a30;
+  --color-groen-700: #2d4a3e;
+  --color-groen-600: #3b5d4e;
+  --color-groen-100: #e4ebe6;
+  --color-groen-50: #f1f5f2;
+
+  --color-grond: #f5f6f4;
+  --color-paneel: #ffffff;
+  --color-rand: #dcdfda;
+  --color-rand-sterk: #c3c8c1;
+  --color-inkt: #1f2421;
+  --color-inkt-zacht: #5b625c;
+  --color-lijn: #9aa09b;
+
+  /* Systeemfont: geen externe aanvraag, direct scherp op elk apparaat. */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-grond);
+  color: var(--color-inkt);
+  font-family: var(--font-sans);
+}
+
+/* Focus altijd zichtbaar, ook op tablet met een toetsenbord. */
+:focus-visible {
+  outline: 2px solid var(--color-groen-700);
+  outline-offset: 2px;
+}
+
+/* Dubbele rand voor holdings: strook achtergrondgroen, daarna een lichte lijn. */
+.dubbele-rand {
+  box-shadow:
+    inset 0 0 0 3px var(--color-groen-700),
+    inset 0 0 0 4px color-mix(in srgb, var(--color-groen-100) 60%, transparent);
+}
+
+/* Dezelfde dubbele rand, maar op het formaat van het legendablokje. */
+.dubbele-rand-klein {
+  box-shadow:
+    inset 0 0 0 1.5px var(--color-groen-700),
+    inset 0 0 0 2.5px color-mix(in srgb, var(--color-groen-100) 70%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   React Flow bijstellen op de huisstijl
+   --------------------------------------------------------------------------- */
+
+.react-flow {
+  --xy-background-color: var(--color-grond);
+  --xy-edge-stroke: var(--color-lijn);
+  --xy-edge-stroke-width: 1.5;
+  --xy-edge-stroke-selected: var(--color-groen-700);
+  --xy-node-border-radius: 6px;
+  --xy-attribution-background-color: transparent;
+}
+
+.react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.react-flow__controls {
+  box-shadow: none;
+  border: 1px solid var(--color-rand);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: var(--color-paneel);
+  border-bottom: 1px solid var(--color-rand);
+  width: 32px;
+  height: 32px;
+}
+
+.react-flow__controls-button svg {
+  fill: var(--color-inkt-zacht);
+}
+
+.react-flow__minimap {
+  border: 1px solid var(--color-rand);
+  border-radius: 8px;
+}
+
+.react-flow__node:focus,
+.react-flow__node:focus-visible {
+  outline: none;
+}
