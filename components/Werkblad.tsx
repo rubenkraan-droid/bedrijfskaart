@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -11,27 +12,22 @@ import {
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
-  useReactFlow,
   type Edge,
   type Node,
   type NodeChange,
-} from '@xyflow/react';
-import { supabaseBrowser } from '@/lib/supabase/client';
-import type { Entiteit, Relatie, Soort } from '@/lib/types';
-import EntiteitNode, { type EntiteitNodeType } from './EntiteitNode';
-import Kop from './Kop';
-import Zijpaneel, { type Tabblad } from './Zijpaneel';
-import Zoekbalk, { type Treffer } from './Zoekbalk';
-
-const BLOK_BREEDTE = 180;
-const BLOK_HOOGTE = 56;
+} from "@xyflow/react";
+import { supabaseBrowser } from "@/lib/supabase/client";
+import type { Entiteit, Relatie, Soort } from "@/lib/types";
+import EntiteitNode, { type EntiteitNodeType } from "./EntiteitNode";
+import Kop from "./Kop";
+import Zoekbalk, { type Treffer } from "./Zoekbalk";
 
 const nodeTypes = { entiteit: EntiteitNode };
 
-const LIJN = '#9aa09b';
+const LIJN = "#9aa09b";
 
 const defaultEdgeOptions = {
-  type: 'smoothstep' as const,
+  type: "smoothstep" as const,
   markerEnd: {
     type: MarkerType.ArrowClosed,
     width: 16,
@@ -57,12 +53,12 @@ export default function Werkblad(props: Props) {
 }
 
 function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
-  const { setCenter } = useReactFlow();
+  const router = useRouter();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<EntiteitNodeType>(
     entiteiten.map((e) => ({
       id: e.id,
-      type: 'entiteit' as const,
+      type: "entiteit" as const,
       position: { x: Number(e.positie_x), y: Number(e.positie_y) },
       data: {
         naam: e.naam,
@@ -70,73 +66,50 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
         korte_omschrijving: e.korte_omschrijving,
       },
       draggable: isBeheerder,
-    }))
+    })),
   );
 
-  const zichtbaar = useMemo(() => new Set(entiteiten.map((e) => e.id)), [entiteiten]);
+  const zichtbaar = useMemo(
+    () => new Set(entiteiten.map((e) => e.id)),
+    [entiteiten],
+  );
 
   const [edges, , onEdgesChange] = useEdgesState<Edge>(
     relaties
-      .filter((r) => zichtbaar.has(r.van_entiteit) && zichtbaar.has(r.naar_entiteit))
+      .filter(
+        (r) => zichtbaar.has(r.van_entiteit) && zichtbaar.has(r.naar_entiteit),
+      )
       .map((r) => ({
         id: r.id,
         source: r.van_entiteit,
         target: r.naar_entiteit,
-      }))
+      })),
   );
 
-  const [geselecteerdId, setGeselecteerdId] = useState<string | null>(null);
-  const [tabblad, setTabblad] = useState<Tabblad>('overzicht');
   const [melding, setMelding] = useState<string | null>(null);
 
   // Laatst opgeslagen posities, om op terug te vallen als opslaan mislukt.
   const laatstOpgeslagen = useRef(
-    new Map(entiteiten.map((e) => [e.id, { x: Number(e.positie_x), y: Number(e.positie_y) }]))
+    new Map(
+      entiteiten.map((e) => [
+        e.id,
+        { x: Number(e.positie_x), y: Number(e.positie_y) },
+      ]),
+    ),
   );
 
-  const perId = useMemo(() => new Map(entiteiten.map((e) => [e.id, e])), [entiteiten]);
-  const geselecteerd = geselecteerdId ? (perId.get(geselecteerdId) ?? null) : null;
-
-  const eigenaren = useMemo(() => {
-    if (!geselecteerdId) return [];
-    return relaties
-      .filter((r) => r.naar_entiteit === geselecteerdId)
-      .map((r) => perId.get(r.van_entiteit)?.naam)
-      .filter((n): n is string => Boolean(n))
-      .sort((a, b) => a.localeCompare(b, 'nl'));
-  }, [geselecteerdId, relaties, perId]);
-
-  const bezittingen = useMemo(() => {
-    if (!geselecteerdId) return [];
-    return relaties
-      .filter((r) => r.van_entiteit === geselecteerdId)
-      .map((r) => perId.get(r.naar_entiteit)?.naam)
-      .filter((n): n is string => Boolean(n))
-      .sort((a, b) => a.localeCompare(b, 'nl'));
-  }, [geselecteerdId, relaties, perId]);
-
-  const centreer = useCallback(
-    (id: string) => {
-      const node = nodes.find((n) => n.id === id);
-      if (!node) return;
-      setCenter(node.position.x + BLOK_BREEDTE / 2, node.position.y + BLOK_HOOGTE / 2, {
-        zoom: 1,
-        duration: 500,
-      });
+  /** Een onderdeel binnenlopen: een eigen pagina met zijn eigen adres. */
+  const openOnderdeel = useCallback(
+    (id: string, vak: "overzicht" | "processen" = "overzicht") => {
+      const vraag = vak === "overzicht" ? "" : `&vak=${vak}`;
+      router.push(`/onderdeel/?id=${id}${vraag}`);
     },
-    [nodes, setCenter]
+    [router],
   );
 
   const kiesTreffer = useCallback(
-    (treffer: Treffer) => {
-      setGeselecteerdId(treffer.entiteitId);
-      setTabblad(treffer.tabblad);
-      centreer(treffer.entiteitId);
-      setNodes((huidig) =>
-        huidig.map((n) => ({ ...n, selected: n.id === treffer.entiteitId }))
-      );
-    },
-    [centreer, setNodes]
+    (treffer: Treffer) => openOnderdeel(treffer.entiteitId, treffer.vak),
+    [openOnderdeel],
   );
 
   // Verslepen opslaan. Alleen beheerders mogen dit; lukt het toch niet, dan
@@ -144,18 +117,23 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
   const opSleepEinde = useCallback(
     async (_: unknown, node: Node) => {
       if (!isBeheerder) return;
-      const nieuw = { x: Math.round(node.position.x), y: Math.round(node.position.y) };
+      const nieuw = {
+        x: Math.round(node.position.x),
+        y: Math.round(node.position.y),
+      };
 
       const { error } = await supabaseBrowser()
-        .from('kaart_entiteiten')
+        .from("kaart_entiteiten")
         .update({ positie_x: nieuw.x, positie_y: nieuw.y })
-        .eq('id', node.id);
+        .eq("id", node.id);
 
       if (error) {
         const terug = laatstOpgeslagen.current.get(node.id);
         if (terug) {
           setNodes((huidig) =>
-            huidig.map((n) => (n.id === node.id ? { ...n, position: terug } : n))
+            huidig.map((n) =>
+              n.id === node.id ? { ...n, position: terug } : n,
+            ),
           );
         }
         setMelding(`Positie niet opgeslagen: ${error.message}`);
@@ -163,29 +141,20 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
       }
 
       laatstOpgeslagen.current.set(node.id, nieuw);
-      setMelding('Nieuwe positie opgeslagen.');
+      setMelding("Nieuwe positie opgeslagen.");
       setTimeout(() => setMelding(null), 2500);
     },
-    [isBeheerder, setNodes]
+    [isBeheerder, setNodes],
   );
+
+  // Verslepen mag de pagina niet openen, dus wordt er gekeken of het blok
+  // werkelijk verplaatst is.
+  const sleepBegin = useRef<{ x: number; y: number } | null>(null);
 
   const opNodesChange = useCallback(
-    (wijzigingen: NodeChange<EntiteitNodeType>[]) => {
-      onNodesChange(wijzigingen);
-      for (const w of wijzigingen) {
-        if (w.type === 'select' && w.selected) {
-          setGeselecteerdId(w.id);
-          setTabblad('overzicht');
-        }
-      }
-    },
-    [onNodesChange]
+    (wijzigingen: NodeChange<EntiteitNodeType>[]) => onNodesChange(wijzigingen),
+    [onNodesChange],
   );
-
-  function sluitPaneel() {
-    setGeselecteerdId(null);
-    setNodes((huidig) => huidig.map((n) => ({ ...n, selected: false })));
-  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -193,18 +162,31 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
         <Zoekbalk entiteiten={entiteiten} opKiezen={kiesTreffer} />
       </Kop>
 
-      <div className="relative flex min-h-0 flex-1">
-        <div className="relative min-w-0 flex-1">
-          {entiteiten.length === 0 ? (
-            <GeenToegang />
-          ) : (
+      <div className="relative min-h-0 flex-1">
+        {entiteiten.length === 0 ? (
+          <GeenToegang />
+        ) : (
+          // React Flow rekent met procenten en krijgt zijn hoogte niet altijd
+          // door van een flexbox. Met absolute plaatsing is de bak altijd echt.
+          <div className="absolute inset-0">
             <ReactFlow
               nodes={nodes}
               edges={edges}
               onNodesChange={opNodesChange}
               onEdgesChange={onEdgesChange}
+              onNodeDragStart={(_, node) => {
+                sleepBegin.current = { ...node.position };
+              }}
               onNodeDragStop={opSleepEinde}
-              onPaneClick={sluitPaneel}
+              onNodeClick={(_, node) => {
+                const begin = sleepBegin.current;
+                const verplaatst =
+                  begin &&
+                  (Math.abs(begin.x - node.position.x) > 2 ||
+                    Math.abs(begin.y - node.position.y) > 2);
+                sleepBegin.current = null;
+                if (!verplaatst) openOnderdeel(node.id);
+              }}
               nodeTypes={nodeTypes}
               defaultEdgeOptions={defaultEdgeOptions}
               nodesDraggable={isBeheerder}
@@ -214,7 +196,6 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
               fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
               minZoom={0.2}
               maxZoom={2}
-              proOptions={{ hideAttribution: false }}
             >
               <Background
                 variant={BackgroundVariant.Dots}
@@ -233,27 +214,16 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
               />
               <Legenda />
             </ReactFlow>
-          )}
+          </div>
+        )}
 
-          {melding && (
-            <div
-              role="status"
-              className="border-rand bg-paneel text-inkt absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border px-3 py-2 text-sm shadow-md"
-            >
-              {melding}
-            </div>
-          )}
-        </div>
-
-        {geselecteerd && (
-          <Zijpaneel
-            entiteit={geselecteerd}
-            eigenaren={eigenaren}
-            bezittingen={bezittingen}
-            tabblad={tabblad}
-            opTabblad={setTabblad}
-            opSluiten={sluitPaneel}
-          />
+        {melding && (
+          <div
+            role="status"
+            className="border-rand bg-paneel text-inkt absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border px-3 py-2 text-sm shadow-md"
+          >
+            {melding}
+          </div>
         )}
       </div>
     </div>
@@ -264,10 +234,12 @@ function GeenToegang() {
   return (
     <div className="flex h-full items-center justify-center px-6 py-16">
       <div className="max-w-sm text-center">
-        <h2 className="text-lg font-semibold tracking-tight">Nog geen onderdelen</h2>
+        <h2 className="text-lg font-semibold tracking-tight">
+          Nog geen onderdelen
+        </h2>
         <p className="text-inkt-zacht mt-2 text-sm leading-relaxed">
-          Je hebt nog geen toegang tot onderdelen van de bedrijfskaart. Vraag een
-          beheerder om je toegang te geven.
+          Je hebt nog geen toegang tot onderdelen van de bedrijfskaart. Vraag
+          een beheerder om je toegang te geven.
         </p>
       </div>
     </div>
@@ -275,9 +247,17 @@ function GeenToegang() {
 }
 
 const LEGENDA: Array<{ soort: Soort; label: string; klasse: string }> = [
-  { soort: 'persoon', label: 'Persoon', klasse: 'rounded-full' },
-  { soort: 'holding', label: 'Holding', klasse: 'rounded-[3px] dubbele-rand-klein' },
-  { soort: 'werkmaatschappij', label: 'Werkmaatschappij', klasse: 'rounded-[3px]' },
+  { soort: "persoon", label: "Persoon", klasse: "rounded-full" },
+  {
+    soort: "holding",
+    label: "Holding",
+    klasse: "rounded-[3px] dubbele-rand-klein",
+  },
+  {
+    soort: "werkmaatschappij",
+    label: "Werkmaatschappij",
+    klasse: "rounded-[3px]",
+  },
 ];
 
 function Legenda() {

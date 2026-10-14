@@ -53,6 +53,29 @@ body {
     inset 0 0 0 4px color-mix(in srgb, var(--color-groen-100) 60%, transparent);
 }
 
+/* Binnenlopen: de pagina komt kort naar je toe in plaats van er zomaar te staan. */
+@keyframes kamer-open {
+  from {
+    opacity: 0;
+    transform: scale(0.985) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.kamer-binnen {
+  animation: kamer-open 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  transform-origin: top center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kamer-binnen {
+    animation: none;
+  }
+}
+
 /* Dezelfde dubbele rand, maar op het formaat van het legendablokje. */
 .dubbele-rand-klein {
   box-shadow:

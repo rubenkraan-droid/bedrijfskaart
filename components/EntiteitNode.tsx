@@ -31,7 +31,8 @@ export default function EntiteitNode({ data, selected }: NodeProps<EntiteitNodeT
   return (
     <div
       className={[
-        'bg-groen-700 w-[180px] px-4 py-3 text-center text-white transition-shadow',
+        'bg-groen-700 w-[180px] cursor-pointer px-4 py-3 text-center text-white transition-all',
+        'hover:bg-groen-600 hover:-translate-y-0.5 hover:shadow-lg',
         VORM[data.soort],
         selected ? 'ring-groen-900 ring-2 ring-offset-2' : '',
       ].join(' ')}

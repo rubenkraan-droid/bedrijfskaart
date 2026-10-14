@@ -3,13 +3,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import { SOORT_LABEL, type Entiteit } from '@/lib/types';
-import type { Tabblad } from './Zijpaneel';
 
 export type Treffer = {
   entiteitId: string;
   titel: string;
   bijschrift: string;
-  tabblad: Tabblad;
+  /** Welk vak op de onderdeelpagina meteen open moet. */
+  vak: 'overzicht' | 'processen';
 };
 
 /**
@@ -69,7 +69,7 @@ export default function Zoekbalk({
           entiteitId: p.entiteit_id,
           titel: p.titel,
           bijschrift: `Proces bij ${naamVan.get(p.entiteit_id) ?? 'onbekend onderdeel'}`,
-          tabblad: 'processen' as Tabblad,
+          vak: 'processen' as const,
         })),
       });
     }, 200);
@@ -105,7 +105,7 @@ export default function Zoekbalk({
             entiteitId: e.id,
             titel: e.naam,
             bijschrift: SOORT_LABEL[e.soort],
-            tabblad: 'overzicht' as Tabblad,
+            vak: 'overzicht' as const,
           }));
 
   // Alleen de uitkomst die bij de huidige zoekterm hoort.
@@ -158,7 +158,7 @@ export default function Zoekbalk({
             </li>
           ) : (
             treffers.map((t) => (
-              <li key={`${t.tabblad}-${t.entiteitId}-${t.titel}`} role="option" aria-selected={false}>
+              <li key={`${t.vak}-${t.entiteitId}-${t.titel}`} role="option" aria-selected={false}>
                 <button
                   type="button"
                   onClick={() => kies(t)}
