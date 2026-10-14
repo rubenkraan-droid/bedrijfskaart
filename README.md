@@ -1,5 +1,7 @@
 # Bedrijfskaart
 
+**https://kaart.recraparcs.nl**
+
 Interne webtoepassing met een klikbare kaart van de bedrijfsstructuur. Per
 onderdeel staan er uitleg, processen, taken, documenten en contactpersonen.
 Iedereen logt in met e-mailadres en wachtwoord en ziet uitsluitend de onderdelen
@@ -117,8 +119,8 @@ npx supabase functions deploy beheer-gebruikers
 Staat in `supabase/functions/beheer-gebruikers/` en is al uitgerold.
 
 Wil je de toegang strakker zetten, geef de function dan de omgevingsvariabele
-`KAART_HERKOMST` met de adressen waarvandaan de browser hem mag aanroepen,
-bijvoorbeeld `https://kaart.recraparcs.nl,http://localhost:3000`. Zonder die
+`KAART_HERKOMST` met de adressen waarvandaan de browser hem mag aanroepen:
+`https://kaart.recraparcs.nl,http://localhost:3000`. Zonder die
 variabele staat hij open voor elke herkomst; dat is niet erg, want hij weigert
 toch iedereen die geen beheerder is.
 
@@ -188,16 +190,19 @@ Laatste uitslag: **40 van de 40 controles goed.**
 ## Hosten op GitHub Pages
 
 De workflow `.github/workflows/pages.yml` bouwt de site bij elke push naar `main`
-en zet hem op Pages. Eenmalig instellen:
+en zet hem op Pages. Dat staat ingesteld en werkt; je hoeft er niets meer aan te
+doen. Voor de volledigheid, zo is het opgezet:
 
-1. **Settings > Pages**, bij **Source** kies je **GitHub Actions**.
-2. Wil je een eigen domein, zet dat dan bij **Custom domain** (bijvoorbeeld
-   `kaart.recraparcs.nl`) en maak bij je domeinbeheerder een CNAME die naar
-   `rubenkraan-droid.github.io` wijst.
-3. Gebruik je geen eigen domein, dan komt de site op
-   `rubenkraan-droid.github.io/bedrijfskaart/`. Zet dan onder **Settings >
-   Secrets and variables > Actions > Variables** een variabele `BASE_PATH` met de
-   waarde `/bedrijfskaart`. Met een eigen domein laat je die weg.
+- **Settings > Pages**, bij **Source** staat **GitHub Actions**.
+- Het eigen domein `kaart.recraparcs.nl` staat bij **Custom domain**, en in
+  `public/CNAME` zodat het bij elke publicatie blijft staan. Bij Cloud86 wijst
+  een CNAME-record `kaart` naar `rubenkraan-droid.github.io`.
+- HTTPS wordt afgedwongen; GitHub vernieuwt het certificaat zelf.
+
+Zou je ooit zonder eigen domein willen draaien, dan komt de site op
+`rubenkraan-droid.github.io/bedrijfskaart/`. Zet dan onder **Settings > Secrets
+and variables > Actions > Variables** een variabele `BASE_PATH` met de waarde
+`/bedrijfskaart`, en haal `public/CNAME` weg.
 
 > De repository is openbaar, want GitHub Pages vanuit een prive repository zit in
 > een betaald abonnement. In de code staan geen geheimen en ook niet de echte
