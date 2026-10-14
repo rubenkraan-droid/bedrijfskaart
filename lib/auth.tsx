@@ -98,6 +98,16 @@ export function AanmeldingProvider({ children }: { children: ReactNode }) {
         if (!afgebroken) setStand({ status: 'uitgelogd' });
         return;
       }
+
+      // Een herstelmail van Supabase geeft een geldige sessie. Zonder deze stap
+      // zou je daarmee gewoon op de kaart belanden, met je oude wachtwoord nog
+      // intact. Daarom gaat zo iemand meteen naar Mijn account, waar hij een
+      // nieuw wachtwoord moet kiezen. De harde navigatie haalt bovendien het
+      // token uit de adresbalk.
+      if (gebeurtenis === 'PASSWORD_RECOVERY') {
+        window.location.replace('/account/?herstel=1');
+        return;
+      }
       void haalGebruiker().then((nieuw) => {
         if (!afgebroken) setStand(nieuw);
       });

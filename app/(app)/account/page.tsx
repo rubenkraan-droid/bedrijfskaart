@@ -1,13 +1,24 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import Kop from '@/components/Kop';
 import { Sectie } from '@/components/beheer/velden';
 import { useGebruiker } from '@/lib/auth';
 import WachtwoordFormulier from './WachtwoordFormulier';
 
-export default function Account() {
+export default function AccountPagina() {
+  return (
+    <Suspense fallback={null}>
+      <Account />
+    </Suspense>
+  );
+}
+
+function Account() {
   const ik = useGebruiker();
+  const herstel = useSearchParams().get('herstel') === '1';
   if (!ik) return null;
 
   return (
@@ -24,6 +35,18 @@ export default function Account() {
             </Link>
             <h1 className="mt-2 text-xl font-semibold tracking-tight">Mijn account</h1>
           </div>
+
+          {herstel && (
+            <p
+              role="status"
+              className="border-groen-100 bg-groen-50 text-groen-800 rounded-md border px-4 py-3 text-sm leading-relaxed"
+            >
+              <strong className="font-semibold">Kies nu een nieuw wachtwoord.</strong> Je
+              bent binnengekomen via een herstellink. Die link gaf je toegang, maar je
+              oude wachtwoord werkt nog steeds. Zet hieronder een nieuw wachtwoord, dan
+              is het oude niet meer bruikbaar.
+            </p>
+          )}
 
           <Sectie titel="Gegevens">
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
@@ -44,7 +67,7 @@ export default function Account() {
 
           <Sectie
             titel="Wachtwoord wijzigen"
-            toelichting="Heb je je wachtwoord van een beheerder gekregen? Zet er dan hier je eigen voor in de plaats."
+            toelichting="Heb je je wachtwoord van een beheerder gekregen, of kom je van een herstellink? Zet er dan hier je eigen voor in de plaats."
           >
             <WachtwoordFormulier />
           </Sectie>
