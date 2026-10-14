@@ -139,8 +139,16 @@ export function Beveiligd({
 
   useEffect(() => {
     if (stand.status === 'uitgelogd') {
-      const hier = window.location.pathname + window.location.search;
-      const naar = hier === '/' ? '/inloggen/' : `/inloggen/?verder=${encodeURIComponent(hier)}`;
+      // De router werkt met paden zonder basePath, maar window.location heeft
+      // die er juist wel bij. Staat de site in een submap, dan moet die er hier
+      // af, anders komt hij er bij het terugsturen een tweede keer bij.
+      const basis = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+      const volledig = window.location.pathname + window.location.search;
+      const hier =
+        basis && volledig.startsWith(basis) ? volledig.slice(basis.length) || '/' : volledig;
+
+      const naar =
+        hier === '/' ? '/inloggen/' : `/inloggen/?verder=${encodeURIComponent(hier)}`;
       router.replace(naar);
     }
   }, [stand.status, router]);
