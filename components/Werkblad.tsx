@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -16,7 +16,6 @@ import {
   type Node,
   type NodeChange,
 } from "@xyflow/react";
-import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Entiteit, Relatie, Soort } from "@/lib/types";
 import EntiteitNode, { type EntiteitNodeType } from "./EntiteitNode";
 import Kop from "./Kop";
@@ -65,7 +64,7 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
         soort: e.soort,
         korte_omschrijving: e.korte_omschrijving,
       },
-      draggable: isBeheerder,
+      draggable: true,
     })),
   );
 
@@ -86,10 +85,8 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
       })),
   );
 
-  const [melding, setMelding] = useState<string | null>(null);
-
-  // Laatst opgeslagen posities, om op terug te vallen als opslaan mislukt.
-  const laatstOpgeslagen = useRef(
+  // De vaste plek van elk blok, zoals die in de database staat.
+  const vastePositie = useRef(
     new Map(
       entiteiten.map((e) => [
         e.id,
@@ -112,39 +109,34 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
     [openOnderdeel],
   );
 
-  // Verslepen opslaan. Alleen beheerders mogen dit; lukt het toch niet, dan
-  // springt het blok terug naar de laatst opgeslagen plek.
+  // Slepen mag, maar het blijft niet staan: zodra je loslaat veert het blok
+  // terug naar zijn vaste plek. Zo kun je de kaart even uit elkaar trekken om
+  // iets beter te zien, zonder dat de indeling voor iedereen verandert. Een
+  // positie echt wijzigen doe je in het beheerscherm, bij Positie x en y.
   const opSleepEinde = useCallback(
-    async (_: unknown, node: Node) => {
-      if (!isBeheerder) return;
-      const nieuw = {
-        x: Math.round(node.position.x),
-        y: Math.round(node.position.y),
-      };
+    (_: unknown, node: Node) => {
+      const vast = vastePositie.current.get(node.id);
+      if (!vast) return;
 
-      const { error } = await supabaseBrowser()
-        .from("kaart_entiteiten")
-        .update({ positie_x: nieuw.x, positie_y: nieuw.y })
-        .eq("id", node.id);
+      setNodes((huidig) =>
+        huidig.map((n) =>
+          n.id === node.id
+            ? { ...n, position: vast, className: "terugveren" }
+            : n,
+        ),
+      );
 
-      if (error) {
-        const terug = laatstOpgeslagen.current.get(node.id);
-        if (terug) {
-          setNodes((huidig) =>
-            huidig.map((n) =>
-              n.id === node.id ? { ...n, position: terug } : n,
-            ),
-          );
-        }
-        setMelding(`Positie niet opgeslagen: ${error.message}`);
-        return;
-      }
-
-      laatstOpgeslagen.current.set(node.id, nieuw);
-      setMelding("Nieuwe positie opgeslagen.");
-      setTimeout(() => setMelding(null), 2500);
+      // De klasse weer weghalen, anders zou ook het volgende slepen zelf
+      // vloeiend meebewegen in plaats van de muis te volgen.
+      window.setTimeout(() => {
+        setNodes((huidig) =>
+          huidig.map((n) =>
+            n.id === node.id ? { ...n, className: undefined } : n,
+          ),
+        );
+      }, 300);
     },
-    [isBeheerder, setNodes],
+    [setNodes],
   );
 
   // Verslepen mag de pagina niet openen, dus wordt er gekeken of het blok
@@ -216,15 +208,6 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
             </ReactFlow>
           </div>
         )}
-
-        {melding && (
-          <div
-            role="status"
-            className="border-rand bg-paneel text-inkt absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-md border px-3 py-2 text-sm shadow-md"
-          >
-            {melding}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -248,6 +231,11 @@ function GeenToegang() {
 
 const LEGENDA: Array<{ soort: Soort; label: string; klasse: string }> = [
   { soort: "persoon", label: "Persoon", klasse: "rounded-full" },
+  {
+    soort: "eenmanszaak",
+    label: "Eenmanszaak",
+    klasse: "rounded-l-full rounded-r-[3px]",
+  },
   {
     soort: "holding",
     label: "Holding",

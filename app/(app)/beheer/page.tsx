@@ -15,6 +15,7 @@ import { SOORT_LABEL, type Entiteit, type Relatie } from '@/lib/types';
 
 const SOORT_OPTIES = [
   { waarde: 'persoon', label: 'Persoon' },
+  { waarde: 'eenmanszaak', label: 'Eenmanszaak' },
   { waarde: 'holding', label: 'Holding' },
   { waarde: 'werkmaatschappij', label: 'Werkmaatschappij' },
 ];

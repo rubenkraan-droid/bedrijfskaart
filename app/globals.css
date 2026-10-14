@@ -128,3 +128,14 @@ body {
 .react-flow__node:focus-visible {
   outline: none;
 }
+
+/* Terugveren: een blok dat je loslaat glijdt terug naar zijn vaste plek. */
+.react-flow__node.terugveren {
+  transition: transform 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node.terugveren {
+    transition: none;
+  }
+}

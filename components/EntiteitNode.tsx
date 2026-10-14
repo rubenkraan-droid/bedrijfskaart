@@ -21,6 +21,9 @@ export type EntiteitNodeType = Node<EntiteitNodeData, 'entiteit'>;
 const VORM: Record<Soort, string> = {
   // Pil met een lichte buitenrand.
   persoon: 'rounded-full border border-groen-100/70',
+  // Halve pil: rond aan de kant van de persoon, recht aan de kant van de
+  // vennootschappen. Een eenmanszaak zit daar juridisch ook tussenin.
+  eenmanszaak: 'rounded-l-full rounded-r-md border border-groen-100/70',
   // Dubbele rand: buitenrand, een strook achtergrondgroen, dan een lichte lijn.
   holding: 'rounded-md border border-groen-800 dubbele-rand',
   // Effen rechthoek.

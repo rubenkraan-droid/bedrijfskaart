@@ -39,6 +39,7 @@ import {
 
 const SOORT_OPTIES = [
   { waarde: 'persoon', label: 'Persoon' },
+  { waarde: 'eenmanszaak', label: 'Eenmanszaak' },
   { waarde: 'holding', label: 'Holding' },
   { waarde: 'werkmaatschappij', label: 'Werkmaatschappij' },
 ];

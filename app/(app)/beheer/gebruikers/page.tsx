@@ -13,7 +13,7 @@ const ROL_OPTIES = [
   { waarde: 'beheerder', label: 'Beheerder' },
 ];
 
-const SOORT_ORDE: Soort[] = ['persoon', 'holding', 'werkmaatschappij'];
+const SOORT_ORDE: Soort[] = ['persoon', 'eenmanszaak', 'holding', 'werkmaatschappij'];
 
 export default function Gebruikers() {
   const ik = useGebruiker();

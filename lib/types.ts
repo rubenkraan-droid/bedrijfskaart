@@ -11,7 +11,7 @@
  */
 
 export type Rol = 'beheerder' | 'lezer';
-export type Soort = 'persoon' | 'holding' | 'werkmaatschappij';
+export type Soort = 'persoon' | 'eenmanszaak' | 'holding' | 'werkmaatschappij';
 export type Relatiesoort = 'eigenaar_van';
 export type Uitvoering = 'automatisch' | 'handmatig';
 export type Taakstatus = 'open' | 'bezig' | 'gereed' | 'geblokkeerd';
@@ -110,6 +110,7 @@ export type ProcesMetStappen = Proces & { stappen: Processtap[] };
 
 export const SOORT_LABEL: Record<Soort, string> = {
   persoon: 'Persoon',
+  eenmanszaak: 'Eenmanszaak',
   holding: 'Holding',
   werkmaatschappij: 'Werkmaatschappij',
 };
