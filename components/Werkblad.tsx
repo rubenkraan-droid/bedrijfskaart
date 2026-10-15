@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -12,13 +12,16 @@ import {
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Edge,
   type Node,
   type NodeChange,
 } from "@xyflow/react";
-import type { Entiteit, Relatie, Soort } from "@/lib/types";
+import type { Entiteit, Relatie } from "@/lib/types";
 import EntiteitNode, { type EntiteitNodeType } from "./EntiteitNode";
 import Kop from "./Kop";
+import { useSoortFilter } from "./SoortFilter";
+import SoortMenu from "./SoortMenu";
 import Zoekbalk, { type Treffer } from "./Zoekbalk";
 
 const nodeTypes = { entiteit: EntiteitNode };
@@ -53,6 +56,8 @@ export default function Werkblad(props: Props) {
 
 function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
   const router = useRouter();
+  const { fitView } = useReactFlow();
+  const { verborgen, wissel, toonAlles } = useSoortFilter();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<EntiteitNodeType>(
     entiteiten.map((e) => ({
@@ -148,10 +153,62 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
     [onNodesChange],
   );
 
+  // Uitgezette soorten verdwijnen van de kaart, en een lijn blijft alleen staan
+  // als beide uiteinden zichtbaar zijn. Dat is dezelfde regel die de database
+  // hanteert voor onderdelen waar iemand geen toegang toe heeft.
+  const soortVanNode = useMemo(
+    () => new Map(entiteiten.map((e) => [e.id, e.soort])),
+    [entiteiten],
+  );
+
+  const isVerborgen = useCallback(
+    (id: string) => {
+      const soort = soortVanNode.get(id);
+      return soort !== undefined && verborgen.has(soort);
+    },
+    [soortVanNode, verborgen],
+  );
+
+  const zichtbareNodes = useMemo(
+    () => nodes.map((n) => ({ ...n, hidden: isVerborgen(n.id) })),
+    [nodes, isVerborgen],
+  );
+
+  const zichtbareEdges = useMemo(
+    () =>
+      edges.map((e) => ({
+        ...e,
+        hidden: isVerborgen(e.source) || isVerborgen(e.target),
+      })),
+    [edges, isVerborgen],
+  );
+
+  const aantalZichtbaar = zichtbareNodes.filter((n) => !n.hidden).length;
+
+  // De overgebleven blokken netjes in beeld brengen: zowel na het aan- of
+  // uitzetten van een soort, als bij het openen, wanneer de bewaarde voorkeur
+  // pas bekend wordt nadat de kaart al is opgebouwd.
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => fitView({ padding: 0.2, maxZoom: 1, duration: 300 }),
+      60,
+    );
+    return () => window.clearTimeout(timer);
+  }, [verborgen, fitView]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <Kop naam={naam} email={email} isBeheerder={isBeheerder}>
-        <Zoekbalk entiteiten={entiteiten} opKiezen={kiesTreffer} />
+        <div className="flex w-full items-center gap-2">
+          <Zoekbalk entiteiten={entiteiten} opKiezen={kiesTreffer} />
+          <SoortMenu
+            verborgen={verborgen}
+            opWisselen={wissel}
+            opAllesTonen={toonAlles}
+            aantalZichtbaar={aantalZichtbaar}
+            aantalTotaal={entiteiten.length}
+          />
+        </div>
       </Kop>
 
       <div className="relative min-h-0 flex-1">
@@ -162,8 +219,8 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
           // door van een flexbox. Met absolute plaatsing is de bak altijd echt.
           <div className="absolute inset-0">
             <ReactFlow
-              nodes={nodes}
-              edges={edges}
+              nodes={zichtbareNodes}
+              edges={zichtbareEdges}
               onNodesChange={opNodesChange}
               onEdgesChange={onEdgesChange}
               onNodeDragStart={(_, node) => {
@@ -204,7 +261,6 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
                 nodeColor="#2d4a3e"
                 maskColor="rgba(245,246,244,0.72)"
               />
-              <Legenda />
             </ReactFlow>
           </div>
         )}
@@ -229,39 +285,3 @@ function GeenToegang() {
   );
 }
 
-const LEGENDA: Array<{ soort: Soort; label: string; klasse: string }> = [
-  { soort: "persoon", label: "Persoon", klasse: "rounded-full" },
-  {
-    soort: "eenmanszaak",
-    label: "Eenmanszaak",
-    klasse: "rounded-l-full rounded-r-[3px]",
-  },
-  {
-    soort: "holding",
-    label: "Holding",
-    klasse: "rounded-[3px] dubbele-rand-klein",
-  },
-  {
-    soort: "werkmaatschappij",
-    label: "Werkmaatschappij",
-    klasse: "rounded-[3px]",
-  },
-];
-
-function Legenda() {
-  return (
-    <div className="border-rand bg-paneel/95 absolute top-3 right-3 z-10 rounded-md border px-3 py-2.5 backdrop-blur">
-      <div className="text-inkt-zacht mb-1.5 text-[10px] font-semibold tracking-wide uppercase">
-        Soorten
-      </div>
-      <ul className="space-y-1.5">
-        {LEGENDA.map(({ soort, label, klasse }) => (
-          <li key={soort} className="flex items-center gap-2">
-            <span className={`bg-groen-700 h-3.5 w-7 shrink-0 ${klasse}`} />
-            <span className="text-xs">{label}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
