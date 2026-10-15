@@ -10,7 +10,6 @@ import { useGebruiker } from '@/lib/auth';
 import { ofFout, useGegevens } from '@/lib/gegevens';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import {
-  SOORT_LABEL,
   type Contactpersoon,
   type Document,
   type Entiteit,
@@ -173,10 +172,7 @@ function Onderdeel() {
 
             <div className="mt-1 flex flex-wrap items-end justify-between gap-4">
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold tracking-wider text-white/60 uppercase">
-                  {SOORT_LABEL[entiteit.soort]}
-                </div>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
                   {entiteit.naam}
                 </h1>
               </div>
@@ -234,7 +230,14 @@ function Onderdeel() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-5 py-7 sm:px-6">
+          {/* De kaart met hoofdtaken krijgt de volle breedte; lopende tekst
+              blijft smal, want dat leest nu eenmaal prettiger. */}
+          <div
+            className={[
+              'mx-auto w-full px-5 py-7 sm:px-6',
+              vak === 'processen' ? 'max-w-7xl' : 'max-w-3xl',
+            ].join(' ')}
+          >
             {vak === 'overzicht' && (
               <Overzicht
                 entiteit={entiteit}

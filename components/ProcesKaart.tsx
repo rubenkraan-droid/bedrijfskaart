@@ -127,7 +127,7 @@ function Binnenkant({
   const { nodes, edges } = useMemo(() => {
     if (gekozen) {
       // De stappen als keten, van links naar rechts, drie per rij.
-      const perRij = 3;
+      const perRij = 4;
       const stapNodes: Node[] = gekozen.stappen.map((stap, i) => ({
         id: stap.id,
         type: 'stap',
@@ -154,12 +154,12 @@ function Binnenkant({
     }
 
     // Alle processen naast elkaar, drie per rij.
-    const perRij = 3;
+    const perRij = 4;
     const procesNodes: Node[] = processen.map((proces, i) => ({
       id: proces.id,
       type: 'proces',
       position: {
-        x: (i % perRij) * 250,
+        x: (i % perRij) * 260,
         y: Math.floor(i / perRij) * 140,
       },
       data: {
@@ -200,7 +200,7 @@ function Binnenkant({
         )}
       </div>
 
-      <div className="border-rand bg-grond relative h-[min(60vh,480px)] overflow-hidden rounded-lg border">
+      <div className="border-rand bg-grond relative h-[min(68vh,620px)] overflow-hidden rounded-lg border">
         {gekozen && gekozen.stappen.length === 0 && (
           <div className="absolute inset-0 z-10 flex items-center justify-center px-6">
             <p className="text-inkt-zacht max-w-sm text-center text-sm leading-relaxed">

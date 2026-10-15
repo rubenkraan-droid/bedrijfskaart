@@ -1,7 +1,7 @@
 'use client';
 
 import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
-import { SOORT_LABEL, type Soort } from '@/lib/types';
+import type { Soort } from '@/lib/types';
 
 export type EntiteitNodeData = {
   naam: string;
@@ -44,9 +44,6 @@ export default function EntiteitNode({ data, selected }: NodeProps<EntiteitNodeT
       <Handle type="target" position={Position.Top} isConnectable={false} />
 
       <div className="truncate text-[14px] leading-tight font-medium">{data.naam}</div>
-      <div className="mt-0.5 truncate text-[10px] tracking-wide text-white/65 uppercase">
-        {SOORT_LABEL[data.soort]}
-      </div>
 
       <Handle type="source" position={Position.Bottom} isConnectable={false} />
     </div>
