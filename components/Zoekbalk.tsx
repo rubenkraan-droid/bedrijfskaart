@@ -68,7 +68,7 @@ export default function Zoekbalk({
         treffers: rijen.map((p) => ({
           entiteitId: p.entiteit_id,
           titel: p.titel,
-          bijschrift: `Proces bij ${naamVan.get(p.entiteit_id) ?? 'onbekend onderdeel'}`,
+          bijschrift: `Hoofdtaak bij ${naamVan.get(p.entiteit_id) ?? 'onbekend onderdeel'}`,
           vak: 'processen' as const,
         })),
       });
@@ -128,8 +128,8 @@ export default function Zoekbalk({
         role="combobox"
         aria-expanded={toon}
         aria-controls={lijstId}
-        aria-label="Zoek een onderdeel of proces"
-        placeholder="Zoek een onderdeel of proces"
+        aria-label="Zoek een onderdeel of hoofdtaak"
+        placeholder="Zoek een onderdeel of hoofdtaak"
         value={term}
         onChange={(e) => {
           setTerm(e.target.value);

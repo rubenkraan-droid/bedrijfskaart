@@ -4,13 +4,8 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import Kop from '@/components/Kop';
-import {
-  Contactpersonen,
-  Documenten,
-  Leeg,
-  Processen,
-  Taken,
-} from '@/components/Inhoud';
+import { Contactpersonen, Documenten, Leeg, Taken } from '@/components/Inhoud';
+import ProcesKaart from '@/components/ProcesKaart';
 import { useGebruiker } from '@/lib/auth';
 import { ofFout, useGegevens } from '@/lib/gegevens';
 import { supabaseBrowser } from '@/lib/supabase/client';
@@ -28,7 +23,7 @@ type Vak = 'overzicht' | 'processen' | 'taken' | 'documenten' | 'contactpersonen
 
 const VAKKEN: Array<{ sleutel: Vak; label: string }> = [
   { sleutel: 'overzicht', label: 'Overzicht' },
-  { sleutel: 'processen', label: 'Processen' },
+  { sleutel: 'processen', label: 'Hoofdtaken' },
   { sleutel: 'taken', label: 'Taken' },
   { sleutel: 'documenten', label: 'Documenten' },
   { sleutel: 'contactpersonen', label: 'Contactpersonen' },
@@ -46,8 +41,8 @@ function Onderdeel() {
   const ik = useGebruiker();
   const params = useSearchParams();
   const id = params.get('id') ?? '';
-  const startVak = (params.get('vak') as Vak | null) ?? 'overzicht';
-  const [vak, setVak] = useState<Vak>(startVak);
+  const gevraagdVak = params.get('vak') as Vak | null;
+  const [gekozenVak, setGekozenVak] = useState<Vak | null>(null);
 
   const { data, bezig, fout } = useGegevens(`ruimte-${id}`, async () => {
     if (!id) return null;
@@ -134,6 +129,12 @@ function Onderdeel() {
   }
 
   const { entiteit, buren, relaties, processen, taken, documenten, contacten } = data;
+
+  // Heeft dit onderdeel hoofdtaken, dan is dat waar je naar kijkt als je het
+  // binnenvliegt. Anders begin je bij het overzicht.
+  const vak: Vak =
+    gekozenVak ?? gevraagdVak ?? (processen.length > 0 ? 'processen' : 'overzicht');
+  const setVak = setGekozenVak;
   const naamVan = new Map(buren.map((e) => [e.id, e.naam]));
 
   const eigenaren = relaties
@@ -241,7 +242,12 @@ function Onderdeel() {
                 bezittingen={bezittingen}
               />
             )}
-            {vak === 'processen' && <Processen processen={processen} />}
+            {vak === 'processen' &&
+              (processen.length === 0 ? (
+                <Leeg tekst="Nog geen hoofdtaken vastgelegd voor dit onderdeel." />
+              ) : (
+                <ProcesKaart processen={processen} naam={entiteit.naam} />
+              ))}
             {vak === 'taken' && <Taken taken={taken} />}
             {vak === 'documenten' && <Documenten documenten={documenten} />}
             {vak === 'contactpersonen' && <Contactpersonen personen={contacten} />}

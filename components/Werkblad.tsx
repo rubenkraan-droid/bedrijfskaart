@@ -26,6 +26,13 @@ import Zoekbalk, { type Treffer } from "./Zoekbalk";
 
 const nodeTypes = { entiteit: EntiteitNode };
 
+/** Afmetingen van een blok, om er precies op te kunnen inzoomen. */
+const BLOK_BREEDTE = 180;
+const BLOK_HOOGTE = 56;
+
+/** Hoe lang het aanvliegen duurt, in milliseconden. */
+const AANVLIEGDUUR = 340;
+
 const LIJN = "#9aa09b";
 
 const defaultEdgeOptions = {
@@ -56,7 +63,7 @@ export default function Werkblad(props: Props) {
 
 function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
   const router = useRouter();
-  const { fitView } = useReactFlow();
+  const { fitView, setCenter } = useReactFlow();
   const { verborgen, wissel, toonAlles } = useSoortFilter();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<EntiteitNodeType>(
@@ -100,13 +107,30 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
     ),
   );
 
-  /** Een onderdeel binnenlopen: een eigen pagina met zijn eigen adres. */
+  /**
+   * Een onderdeel binnenvliegen: de kaart zoomt eerst naar het blok toe, en pas
+   * als je er bovenop zit opent de pagina van dat onderdeel. Daardoor voelt het
+   * alsof je dat blok in gaat in plaats van ergens anders heen te springen.
+   */
   const openOnderdeel = useCallback(
     (id: string, vak: "overzicht" | "processen" = "overzicht") => {
       const vraag = vak === "overzicht" ? "" : `&vak=${vak}`;
-      router.push(`/onderdeel/?id=${id}${vraag}`);
+      const doel = `/onderdeel/?id=${id}${vraag}`;
+
+      const node = nodes.find((n) => n.id === id);
+      if (!node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        router.push(doel);
+        return;
+      }
+
+      setCenter(
+        node.position.x + BLOK_BREEDTE / 2,
+        node.position.y + BLOK_HOOGTE / 2,
+        { zoom: 2, duration: AANVLIEGDUUR },
+      );
+      window.setTimeout(() => router.push(doel), AANVLIEGDUUR - 60);
     },
-    [router],
+    [router, nodes, setCenter],
   );
 
   const kiesTreffer = useCallback(

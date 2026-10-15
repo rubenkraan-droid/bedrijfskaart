@@ -277,12 +277,12 @@ function OnderdeelBeheer() {
       </Sectie>
 
       <Sectie
-        titel="Processen"
-        toelichting="Per stap geef je aan of die automatisch verloopt of handmatig door een medewerker gebeurt."
+        titel="Hoofdtaken"
+        toelichting="Wat dit onderdeel doet of bezit. Per stap geef je aan of die automatisch verloopt of handmatig door een medewerker gebeurt."
       >
         <div className="space-y-5">
           {processen.length === 0 ? (
-            <Leeg tekst="Nog geen processen." />
+            <Leeg tekst="Nog geen hoofdtaken." />
           ) : (
             processen.map((proces) => (
               <article key={proces.id} className="border-rand rounded-md border p-4">
@@ -296,19 +296,19 @@ function OnderdeelBeheer() {
                   <VerwijderKnop
                     actie={verwijderProces}
                     velden={{ id: proces.id }}
-                    bevestiging={`Proces "${proces.titel}" verwijderen, met al zijn stappen?`}
+                    bevestiging={`Hoofdtaak "${proces.titel}" verwijderen, met al zijn stappen?`}
                     naAfloop={herlaad}
                   />
                 </div>
 
                 <details className="mt-3">
                   <summary className="text-inkt-zacht hover:text-inkt cursor-pointer text-sm">
-                    Proces wijzigen
+                    Hoofdtaak wijzigen
                   </summary>
                   <div className="mt-3">
                     <Formulier
                       actie={wijzigProces}
-                      knop="Proces opslaan"
+                      knop="Hoofdtaak opslaan"
                       stil
                       naAfloop={herlaad}
                     >
@@ -461,7 +461,7 @@ function OnderdeelBeheer() {
           <div className="border-rand border-t pt-4">
             <Formulier
               actie={maakProces}
-              knop="Proces toevoegen"
+              knop="Hoofdtaak toevoegen"
               naAfloop={herlaad}
               leegNaAfloop
             >
