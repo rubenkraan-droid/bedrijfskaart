@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -34,9 +34,15 @@ const BLOK_HOOGTE = 56;
 const AANVLIEGDUUR = 340;
 
 const LIJN = "#9aa09b";
+const LIJN_OP = "#2d4a3e";
 
+/**
+ * Gebogen lijnen in plaats van haakse. Twee lijnen naar hetzelfde blok liepen
+ * eerst door dezelfde verticale gang naar beneden en leken daardoor een lijn.
+ * Met een boog houdt elke lijn zijn eigen weg en zie je ze elkaar kruisen.
+ */
 const defaultEdgeOptions = {
-  type: "smoothstep" as const,
+  type: "bezier" as const,
   markerEnd: {
     type: MarkerType.ArrowClosed,
     width: 16,
@@ -65,6 +71,9 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
   const router = useRouter();
   const { fitView, setCenter } = useReactFlow();
   const { verborgen, wissel, toonAlles } = useSoortFilter();
+
+  /** Welk blok je op dit moment aanwijst, om zijn lijnen te laten oplichten. */
+  const [zweef, setZweef] = useState<string | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<EntiteitNodeType>(
     entiteiten.map((e) => ({
@@ -193,18 +202,58 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
     [soortVanNode, verborgen],
   );
 
+  // Wie direct aan het aangewezen blok vastzit, blijft op volle sterkte staan.
+  const burenVan = useMemo(() => {
+    const kaart = new Map<string, Set<string>>();
+    for (const r of relaties) {
+      if (!kaart.has(r.van_entiteit)) kaart.set(r.van_entiteit, new Set());
+      if (!kaart.has(r.naar_entiteit)) kaart.set(r.naar_entiteit, new Set());
+      kaart.get(r.van_entiteit)!.add(r.naar_entiteit);
+      kaart.get(r.naar_entiteit)!.add(r.van_entiteit);
+    }
+    return kaart;
+  }, [relaties]);
+
   const zichtbareNodes = useMemo(
-    () => nodes.map((n) => ({ ...n, hidden: isVerborgen(n.id) })),
-    [nodes, isVerborgen],
+    () =>
+      nodes.map((n) => {
+        const betrokken =
+          zweef === null || n.id === zweef || (burenVan.get(zweef)?.has(n.id) ?? false);
+        return {
+          ...n,
+          hidden: isVerborgen(n.id),
+          style: { opacity: betrokken ? 1 : 0.35, transition: "opacity 140ms" },
+        };
+      }),
+    [nodes, isVerborgen, zweef, burenVan],
   );
 
+  // Wijs je een blok aan, dan lichten precies zijn eigen lijnen op en vervagen
+  // de rest. Zo zie je in een oogopslag wat waar vandaan komt.
   const zichtbareEdges = useMemo(
     () =>
-      edges.map((e) => ({
-        ...e,
-        hidden: isVerborgen(e.source) || isVerborgen(e.target),
-      })),
-    [edges, isVerborgen],
+      edges.map((e) => {
+        const raakt = zweef !== null && (e.source === zweef || e.target === zweef);
+        const gedimd = zweef !== null && !raakt;
+        return {
+          ...e,
+          hidden: isVerborgen(e.source) || isVerborgen(e.target),
+          zIndex: raakt ? 10 : 0,
+          style: {
+            stroke: raakt ? LIJN_OP : LIJN,
+            strokeWidth: raakt ? 2.5 : 1.5,
+            opacity: gedimd ? 0.18 : 1,
+            transition: "stroke 140ms, opacity 140ms",
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: raakt ? 18 : 16,
+            height: raakt ? 18 : 16,
+            color: raakt ? LIJN_OP : LIJN,
+          },
+        };
+      }),
+    [edges, isVerborgen, zweef],
   );
 
   const aantalZichtbaar = zichtbareNodes.filter((n) => !n.hidden).length;
@@ -247,7 +296,9 @@ function Binnenkant({ entiteiten, relaties, isBeheerder, naam, email }: Props) {
               edges={zichtbareEdges}
               onNodesChange={opNodesChange}
               onEdgesChange={onEdgesChange}
-              onNodeDragStart={(_, node) => {
+              onNodeMouseEnter={(_, node) => setZweef(node.id)}
+            onNodeMouseLeave={() => setZweef(null)}
+            onNodeDragStart={(_, node) => {
                 sleepBegin.current = { ...node.position };
               }}
               onNodeDragStop={opSleepEinde}
